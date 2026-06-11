@@ -36,32 +36,28 @@ public class BillInquiryRouteBuilder extends ErrorHandlerRouteBuilder {
 
         from("direct:bill-inquiry").routeId("bill-inquiry").log("Received request for bill inquiry")
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200)).process(exchange -> {
-                    logger.debug("Bill Inquiry Id: {}" , exchange.getIn().getHeader(BILL_ID).toString());
+                    logger.debug("Bill Inquiry Id: {}", exchange.getIn().getHeader(BILL_ID).toString());
                     BillInquiryResponseDTO billInquiryResponseDTO;
                     String billId = exchange.getIn().getHeader(BILL_ID).toString();
                     String billerID = exchange.getProperty(BILLER_ID).toString();
                     String billerName = exchange.getProperty(BILLER_NAME).toString();
-                    if(billId.equals(billIdInvalidId)){
+                    if (billId.equals(billIdInvalidId)) {
                         logger.info("Bill Id is Invalid");
-                        billInquiryResponseDTO = setResponseBodyForInvalidBill(
-                                exchange.getIn().getHeader(CLIENTCORRELATIONID).toString());
+                        billInquiryResponseDTO = setResponseBodyForInvalidBill(exchange.getIn().getHeader(CLIENTCORRELATIONID).toString());
                         exchange.setProperty(BILL_FETCH_FAILED, true);
-                        exchange.setProperty(ERROR_INFORMATION,"Bill Fetch failed: Invalid Bill Id");
-                    }
-                    else if(billId.equals(billIdEmptyId)){
+                        exchange.setProperty(ERROR_INFORMATION, "Bill Fetch failed: Invalid Bill Id");
+                    } else if (billId.equals(billIdEmptyId)) {
                         logger.info("Bill Id is Empty");
-                        billInquiryResponseDTO = setResponseBodyForEmptyBill(
-                                exchange.getIn().getHeader(CLIENTCORRELATIONID).toString());
+                        billInquiryResponseDTO = setResponseBodyForEmptyBill(exchange.getIn().getHeader(CLIENTCORRELATIONID).toString());
                         exchange.setProperty(BILL_FETCH_FAILED, true);
-                        exchange.setProperty(ERROR_INFORMATION,"Bill Fetch failed: Empty bill ID");
-                    }
-                    else {
-                        billInquiryResponseDTO = setResponseBody(
-                                exchange.getIn().getHeader(CLIENTCORRELATIONID).toString(), billId, billerID, billerName);
+                        exchange.setProperty(ERROR_INFORMATION, "Bill Fetch failed: Empty bill ID");
+                    } else {
+                        billInquiryResponseDTO = setResponseBody(exchange.getIn().getHeader(CLIENTCORRELATIONID).toString(), billId,
+                                billerID, billerName);
                         exchange.setProperty(BILL_FETCH_FAILED, false);
                     }
                     exchange.setProperty(BILL_INQUIRY_RESPONSE, billInquiryResponseDTO);
-                    exchange.setProperty(AMOUNT,billInquiryResponseDTO.getBillDetails().getAmountonDueDate());
+                    exchange.setProperty(AMOUNT, billInquiryResponseDTO.getBillDetails().getAmountonDueDate());
                     ObjectMapper objectMapper = new ObjectMapper();
                     String jsonString = objectMapper.writeValueAsString(billInquiryResponseDTO);
                     exchange.getIn().setBody(jsonString);
@@ -84,18 +80,19 @@ public class BillInquiryRouteBuilder extends ErrorHandlerRouteBuilder {
         billInquiryResponseDTO.setClientCorrelationId(clientCorrelationId);
         return billInquiryResponseDTO;
     }
+
     private BillInquiryResponseDTO setResponseBodyForInvalidBill(String clientCorrelationId) {
         billInquiryResponseDTO.setCode(FAILED_RESPONSE_CODE.getValue());
         billInquiryResponseDTO.setReason("Invalid Bill ID");
         billInquiryResponseDTO.setClientCorrelationId(clientCorrelationId);
         return billInquiryResponseDTO;
     }
+
     private BillInquiryResponseDTO setResponseBodyForEmptyBill(String clientCorrelationId) {
         billInquiryResponseDTO.setCode(FAILED_RESPONSE_CODE.getValue());
         billInquiryResponseDTO.setReason("Empty Bill ID");
         billInquiryResponseDTO.setClientCorrelationId(clientCorrelationId);
         return billInquiryResponseDTO;
     }
-
 
 }

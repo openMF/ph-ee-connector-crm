@@ -35,19 +35,14 @@ public class BillPayRouteBuilder extends ErrorHandlerRouteBuilder {
                 .json(JsonLibrary.Jackson, BillPaymentsReqDTO.class).setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200))
                 .process(exchange -> {
                     BillPaymentsResponseDTO response;
-                    logger.debug("Bill Payments Request: {}" ,exchange.getIn().getBody(BillPaymentsReqDTO.class));
-                    if(exchange.getIn().getBody(BillPaymentsReqDTO.class).getBillId().equals(billAlreadyPaidId)){
-                        response =
-                                setResponseBodyForBillPaid(exchange.getIn().getBody(BillPaymentsReqDTO.class));
-                    }
-                    else if(exchange.getIn().getBody(BillPaymentsReqDTO.class).getBillId().equals(billPayTimeoutId)){
+                    logger.debug("Bill Payments Request: {}", exchange.getIn().getBody(BillPaymentsReqDTO.class));
+                    if (exchange.getIn().getBody(BillPaymentsReqDTO.class).getBillId().equals(billAlreadyPaidId)) {
+                        response = setResponseBodyForBillPaid(exchange.getIn().getBody(BillPaymentsReqDTO.class));
+                    } else if (exchange.getIn().getBody(BillPaymentsReqDTO.class).getBillId().equals(billPayTimeoutId)) {
                         Thread.sleep(15000);
-                        response =
-                                setResponseBodyForBillPayTimeout(exchange.getIn().getBody(BillPaymentsReqDTO.class));
-                    }
-                    else {
-                       response =
-                               setResponseBodyForSuccess(exchange.getIn().getBody(BillPaymentsReqDTO.class));
+                        response = setResponseBodyForBillPayTimeout(exchange.getIn().getBody(BillPaymentsReqDTO.class));
+                    } else {
+                        response = setResponseBodyForSuccess(exchange.getIn().getBody(BillPaymentsReqDTO.class));
                     }
                     exchange.setProperty("billPayFailed", false);
                     exchange.setProperty(BILL_PAY_RESPONSE, response);
@@ -72,6 +67,7 @@ public class BillPayRouteBuilder extends ErrorHandlerRouteBuilder {
         billPaymentsResponseDTO.setPaymentReferenceID(billPaymentsReqDTO.getPaymentReferenceID());
         return billPaymentsResponseDTO;
     }
+
     private BillPaymentsResponseDTO setResponseBodyForBillPaid(BillPaymentsReqDTO billPaymentsReqDTO) {
 
         billPaymentsResponseDTO.setBillId(billPaymentsReqDTO.getBillId());
@@ -82,6 +78,7 @@ public class BillPayRouteBuilder extends ErrorHandlerRouteBuilder {
         billPaymentsResponseDTO.setPaymentReferenceID(billPaymentsReqDTO.getPaymentReferenceID());
         return billPaymentsResponseDTO;
     }
+
     private BillPaymentsResponseDTO setResponseBodyForBillPayTimeout(BillPaymentsReqDTO billPaymentsReqDTO) {
 
         billPaymentsResponseDTO.setBillId(billPaymentsReqDTO.getBillId());
