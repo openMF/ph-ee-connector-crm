@@ -6,11 +6,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
+import jakarta.annotation.PostConstruct;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.PostConstruct;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
@@ -50,9 +50,7 @@ public class ZeebeWorkers {
     @Value("${status.billTimeout}")
     private int billTimeout;
 
-
     private static final ScheduledExecutorService scheduledThreadPoolExecutor = Executors.newScheduledThreadPool(10);
-
 
     @PostConstruct
     public void setupWorkers() {
@@ -72,7 +70,7 @@ public class ZeebeWorkers {
             producerTemplate.send("direct:bill-inquiry", exchange);
             variables.put(BILL_INQUIRY_RESPONSE, exchange.getProperty(BILL_INQUIRY_RESPONSE));
             variables.put(BILL_FETCH_FAILED, exchange.getProperty(BILL_FETCH_FAILED));
-            variables.put(AMOUNT,exchange.getProperty(AMOUNT));
+            variables.put(AMOUNT, exchange.getProperty(AMOUNT));
             zeebeClient.newCompleteCommand(job.getKey()).variables(variables).send();
             logger.debug("Zeebe variable {}", job.getVariablesAsMap());
         }).name("fetch-bill").maxJobsActive(workerMaxJobs).open();
@@ -82,8 +80,9 @@ public class ZeebeWorkers {
             logger.info("Job '{}' started from process '{}' with key {}", job.getType(), job.getBpmnProcessId(), job.getKey());
             logWorkerDetails(job);
             Map<String, Object> variables = job.getVariablesAsMap();
-            if(variables.get(BILL_ID).equals(billReqAcceptedId)){
-                pauseExec();}
+            if (variables.get(BILL_ID).equals(billReqAcceptedId)) {
+                pauseExec();
+            }
             Headers headers = new Headers.HeaderBuilder().addHeader(PLATFORM_TENANT, variables.get(TENANT_ID).toString())
                     .addHeader(CLIENTCORRELATIONID, variables.get(CLIENTCORRELATIONID).toString())
                     .addHeader(PAYER_FSP, variables.get("payerFspId").toString()).build();
@@ -132,16 +131,14 @@ public class ZeebeWorkers {
     }
 
     private void pauseExec() {
-            try {
-                logger.info("Pausing execution for capturing intermediary status ");
-                scheduledThreadPoolExecutor.schedule(() -> {
-                }, billTimeout, TimeUnit.SECONDS).get();
-            } catch (Exception e) {
-                throw new RuntimeException();
-            }
+        try {
+            logger.info("Pausing execution for capturing intermediary status ");
+            scheduledThreadPoolExecutor.schedule(() -> {}, billTimeout, TimeUnit.SECONDS).get();
+        } catch (Exception e) {
+            throw new RuntimeException();
+        }
         logger.info("Resuming execution post pause");
     }
-
 
     private void logWorkerDetails(ActivatedJob job) {
         JSONObject jsonJob = new JSONObject();
